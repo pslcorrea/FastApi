@@ -10,12 +10,15 @@ from app.banco_de_dados.cliente_repositorio import ClienteRepositorio
 from app.dependencias import obter_cliente_repositorio
 
 router = APIRouter(
+  prefix="/api/clientes"
+)
+
+front_router = APIRouter(
   prefix="/clientes"
 )
 
-CLIENTE_LIST = [Cliente(id_=1,nome="Paulo Corrêa",email="pslcorrea@gmail.com",telefone="125456979"),
-                   Cliente(id_=2,nome="Ana Corrêa",email="ana@gmail.com",telefone="125456979"),
-                   ]
+templates = Jinja2Templates(directory="templates")
+
 
 @router.get("/", response_model=list[Cliente])
 async def listar_clientes(cliente_repositorio: Annotated[ClienteRepositorio, Depends(obter_cliente_repositorio)]):
@@ -56,3 +59,29 @@ async def deletar_cliente(
   sucesso = await cliente_repositorio.deletar_cliente(cliente_id)
   if not sucesso:
     raise HTTPException(status_code=404, detail="Cliente não encontrado!")
+  
+@front_router.get("/", response_class=HTMLResponse)
+async def pagina_listar_clientes(request: Request, cliente_repositorio: Annotated[ClienteRepositorio, Depends(obter_cliente_repositorio)]):
+  clientes = await cliente_repositorio.listar_clientes()
+  return templates.TemplateResponse(
+    request=request, 
+    name="clientes.html", 
+    context={"clientes": clientes, "titulo": "Lista de Clientes"}
+  )
+
+@front_router.get("/novo", response_class=HTMLResponse)
+async def pagina_criar_cliente(request: Request):
+  return templates.TemplateResponse(
+    request=request, 
+    name="clientes-form.html", 
+  )
+
+@front_router.get("/{cliente_id}", response_class=HTMLResponse)
+async def pagina_editar_cliente(request: Request, cliente_id:int, cliente_repositorio: Annotated[ClienteRepositorio, Depends(obter_cliente_repositorio)]):
+  cliente = await cliente_repositorio.obter_cliente(cliente_id)
+
+  return templates.TemplateResponse(
+    request=request, 
+    name="clientes-form.html", 
+    context={"cliente": cliente}
+  )
