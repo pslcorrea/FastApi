@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
-from app.rotas import cliente
+from app.rotas import cliente, login
 
 templates = Jinja2Templates(directory="templates")
 
@@ -16,6 +16,8 @@ app = FastAPI(
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.include_router(cliente.router)
 app.include_router(cliente.front_router)
+
+app.include_router(login.router)
 
 @app.get("/health")
 async def health_check():
